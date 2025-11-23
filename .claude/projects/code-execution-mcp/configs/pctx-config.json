@@ -1,0 +1,25 @@
+{
+  "name": "configs",
+  "version": "0.1.0",
+  "servers": [],
+  "logger": {
+    "enabled": true,
+    "level": "info",
+    "format": "compact",
+    "colors": true
+  },
+  "telemetry": {
+    "traces": {
+      "enabled": false,
+      "sampling": {
+        "strategy": "always",
+        "rate": 1.0
+      },
+      "exporters": []
+    },
+    "metrics": {
+      "enabled": false,
+      "exporters": []
+    }
+  }
+}

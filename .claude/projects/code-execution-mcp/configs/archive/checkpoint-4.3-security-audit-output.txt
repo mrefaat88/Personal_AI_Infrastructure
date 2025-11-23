@@ -1,0 +1,82 @@
+[36m================================================================================[0m
+[36m🔒 SECURITY AUDIT - Checkpoint 4.3[0m
+[36m================================================================================[0m
+[0mProject: Code Execution with MCP Migration[0m
+[0mArchitecture: Custom filesystem-based TypeScript wrappers[0m
+[0mDate: 2025-11-22
+[0m
+[36m
+📊 Test 1: Memory Limits[0m
+[36m
+⏱️  Test 2: Timeout Protection[0m
+[36m
+🔐 Test 3: Credential Isolation[0m
+[36m
+🔄 Test 4: Credential Configuration Validation[0m
+[36m
+⚠️  Test 5: Error Handling (No Sensitive Data Leaks)[0m
+[36m
+🔒 Test 6: MCP Process Isolation[0m
+[36m
+================================================================================[0m
+[36m📊 SECURITY AUDIT RESULTS[0m
+[36m================================================================================
+[0m
+[0m[32mPASS[0m - Memory Limit Protection: Excessive memory allocation prevented or limited[0m
+[34m   Memory allocation either blocked by JavaScript engine or sandbox limits[0m
+[34m   Exit code: 1[0m
+[34m   Error: 
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+Error: Transform failed with[0m
+
+[0m[31mFAIL[0m - Timeout Protection: Process completed without timeout (should have been killed)[0m
+[34m   Exit code: 1[0m
+[34m   Execution time: 994ms[0m
+[34m   Process was not terminated by timeout mechanism[0m
+
+[0m[31mFAIL[0m - Credential Isolation: Could not parse credential test output[0m
+[34m   Parse error: SyntaxError: Unexpected token 'o', "
+node:intern"... is not valid JSON[0m
+[34m   Output: 
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+Error: Transform failed with 1 error:
+/tmp/security-test-credentials.ts:2:5: ERROR: Syntax error "!"
+    at failureErrorWithLog [0m
+
+[0m[32mPASS[0m - Credential Configuration Validation: Hardcoded wrapper credentials match .mcp.google.json[0m
+[34m   ✅ CLIENT_ID matches config[0m
+[34m   ✅ CLIENT_SECRET matches config[0m
+[34m   ✅ REFRESH_TOKEN matches config[0m
+[34m   ✅ Credential rotation process: Update .mcp.google.json → regenerate wrappers[0m
+
+[0m[32mPASS[0m - Error Handling (Sensitive Data Leaks): No credentials detected in error output[0m
+[34m   ✅ No credentials leaked in error messages[0m
+[34m   ✅ Error handling preserves credential isolation[0m
+
+[0m[32mPASS[0m - MCP Process Isolation: MCP subprocesses spawn independently with stdio isolation[0m
+[34m   ✅ Each MCP wrapper spawns independent subprocess[0m
+[34m   ✅ Communication via stdio (stdin/stdout) only[0m
+[34m   ✅ No shared memory or IPC channels[0m
+[34m   ✅ Subprocess terminated after wrapper execution completes[0m
+[34m   ✅ Credentials passed via environment variables to subprocess only[0m
+[34m   Architecture: child_process.spawn() with stdio transport[0m
+
+[36m================================================================================[0m
+[36m📈 SUMMARY[0m
+[36m================================================================================
+[0m
+[0mTotal Tests: 6[0m
+[0m[32mPassed: 4[0m[0m
+[0m[33mWarnings: 0[0m[0m
+[0m[31mFailed: 2[0m[0m
+[0mTotal Execution Time: 3s
+[0m
+[0mSecurity Score: 67%[0m
+[0m[31m❌ Security Audit: FAIL[0m
+[0m
+[0mResults saved to: /home/emyth/PAI/.claude/projects/code-execution-mcp/checkpoint-4.3-security-audit-results.json
+[0m

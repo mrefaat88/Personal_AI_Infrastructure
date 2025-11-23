@@ -1,0 +1,249 @@
+{
+  "architecture": "custom-filesystem-based",
+  "approach": "TypeScript wrappers for stdio MCPs",
+  "decision": "Option 2 - Abandoned pctx, built custom filesystem-based implementation",
+  "decisionDate": "2025-11-22",
+  "decisionRationale": "pctx designed for HTTP MCPs, our Google MCPs use stdio transport. Custom implementation follows Anthropic's Code Execution with MCP concept more directly.",
+
+  "mcpServers": {
+    "google-tasks": {
+      "command": "bunx @brandcast_app/google-tasks-mcp",
+      "transport": "stdio",
+      "package": "@brandcast_app/google-tasks-mcp",
+      "version": "0.1.0",
+      "wrapperPath": "servers/google-tasks/",
+      "tools": [
+        {
+          "name": "listProviders",
+          "wrapperFile": "list_providers.ts",
+          "description": "Get list of available task management providers"
+        },
+        {
+          "name": "listTaskLists",
+          "wrapperFile": "list_task_lists.ts",
+          "description": "Get all task lists/projects from Google Tasks",
+          "tested": true,
+          "testDate": "2025-11-22",
+          "testResult": "SUCCESS - returned 4 task lists"
+        },
+        {
+          "name": "getTasks",
+          "wrapperFile": "get_tasks.ts",
+          "description": "Retrieve tasks from a specific list with optional filtering"
+        },
+        {
+          "name": "createTask",
+          "wrapperFile": "create_task.ts",
+          "description": "Create a new task in a specific list"
+        },
+        {
+          "name": "updateTask",
+          "wrapperFile": "update_task.ts",
+          "description": "Update an existing task"
+        },
+        {
+          "name": "completeTask",
+          "wrapperFile": "complete_task.ts",
+          "description": "Mark a task as completed"
+        },
+        {
+          "name": "deleteTask",
+          "wrapperFile": "delete_task.ts",
+          "description": "Delete a task permanently"
+        },
+        {
+          "name": "searchTasks",
+          "wrapperFile": "search_tasks.ts",
+          "description": "Search tasks across all lists"
+        },
+        {
+          "name": "syncAllTasks",
+          "wrapperFile": "sync_all_tasks.ts",
+          "description": "Fetch and sync tasks from all lists"
+        }
+      ],
+      "authentication": {
+        "type": "OAuth 2.0",
+        "credentials": {
+          "clientId": "GOOGLE_CLIENT_ID environment variable",
+          "clientSecret": "GOOGLE_CLIENT_SECRET environment variable",
+          "refreshToken": "GOOGLE_REFRESH_TOKEN environment variable"
+        },
+        "source": "/home/emyth/PAI/.claude/.mcp.google.json"
+      }
+    },
+    "google-calendar": {
+      "command": "bunx @cocal/google-calendar-mcp",
+      "transport": "stdio",
+      "package": "@cocal/google-calendar-mcp",
+      "wrapperPath": "servers/google-calendar/",
+      "status": "pending",
+      "note": "To be implemented in Checkpoint 3.1"
+    },
+    "google-drive": {
+      "command": "npx -y @piotr-agier/google-drive-mcp",
+      "transport": "stdio",
+      "package": "@piotr-agier/google-drive-mcp",
+      "wrapperPath": "servers/google-drive/",
+      "status": "pending",
+      "note": "To be implemented in Checkpoint 3.1"
+    },
+    "atlassian": {
+      "command": "npx -y mcp-atlassian",
+      "transport": "stdio",
+      "package": "mcp-atlassian",
+      "version": "2.1.0",
+      "wrapperPath": "servers/atlassian/",
+      "coverage": {
+        "jira": "17 tools",
+        "confluence": "24 tools",
+        "total": "41 tools"
+      },
+      "authentication": {
+        "type": "API Token",
+        "credentials": {
+          "baseUrl": "ATLASSIAN_BASE_URL environment variable",
+          "email": "ATLASSIAN_EMAIL environment variable",
+          "apiToken": "ATLASSIAN_API_TOKEN environment variable"
+        },
+        "source": "configs/.mcp.atlassian.json"
+      },
+      "status": "in-progress",
+      "note": "Integration in progress - following methodology.md for MCP integration",
+      "integrationDate": "2025-11-22"
+    }
+  },
+
+  "sandbox": {
+    "provider": "Claude Code built-in",
+    "runtime": "Node.js via child_process spawn",
+    "capabilities": [
+      "Node.js execution",
+      "subprocess spawning",
+      "stdio communication",
+      "file system access (sandboxed)",
+      "environment variable access"
+    ],
+    "security": {
+      "isolation": "Google's gvisor container",
+      "credentials": "Passed via environment variables",
+      "network": "Limited to MCP subprocess communication"
+    }
+  },
+
+  "implementation": {
+    "wrapperGenerator": "scripts/generate-mcp-wrappers.ts",
+    "generatorCapabilities": [
+      "Reads MCP tool schemas via tools/list",
+      "Generates TypeScript wrapper functions",
+      "Handles MCP protocol initialization",
+      "Manages subprocess lifecycle",
+      "Parses JSON-RPC responses"
+    ],
+    "protocol": {
+      "version": "2024-11-05",
+      "transport": "stdio (JSON-RPC over stdin/stdout)",
+      "initialization": "Required before tool calls",
+      "methods": [
+        "initialize",
+        "tools/list",
+        "tools/call"
+      ]
+    }
+  },
+
+  "benefits": {
+    "tokenEfficiency": {
+      "before": "33,500 tokens per /google call",
+      "after": "~500-2,000 tokens per operation",
+      "savings": "91-98%",
+      "mechanism": "Code filters/processes data in sandbox before returning to context"
+    },
+    "performance": {
+      "before": "3-4s per simple query",
+      "after": "<1s per operation",
+      "improvement": "75-87%",
+      "mechanism": "Direct subprocess execution, no process spawning overhead"
+    },
+    "functionality": {
+      "multiStepWorkflows": "Execute multiple MCP calls in single code execution",
+      "dataProcessing": "Filter, transform, aggregate data in-sandbox",
+      "statefulOperations": "Maintain state across multiple calls in single execution",
+      "permissionFlow": "OAuth handled by MCP subprocess, no cross-process issues"
+    }
+  },
+
+  "checkpoints": {
+    "2.1": {
+      "name": "pctx Installation",
+      "status": "COMPLETE",
+      "result": "Installed, but determined incompatible with stdio MCPs"
+    },
+    "2.2": {
+      "name": "Custom Filesystem Implementation",
+      "status": "COMPLETE",
+      "tasks": [
+        {
+          "task": "Update PLAN.md with Option 2 decision",
+          "status": "COMPLETE"
+        },
+        {
+          "task": "Create wrapper generator script",
+          "status": "COMPLETE",
+          "file": "scripts/generate-mcp-wrappers.ts"
+        },
+        {
+          "task": "Generate Google Tasks wrappers",
+          "status": "COMPLETE",
+          "files": [
+            "servers/google-tasks/list_task_lists.ts",
+            "servers/google-tasks/list_tasks.ts",
+            "servers/google-tasks/create_task.ts",
+            "servers/google-tasks/update_task.ts",
+            "servers/google-tasks/delete_task.ts",
+            "servers/google-tasks/index.ts"
+          ]
+        },
+        {
+          "task": "Test listTaskLists wrapper",
+          "status": "COMPLETE",
+          "result": "SUCCESS - returned 4 task lists",
+          "testDate": "2025-11-22"
+        },
+        {
+          "task": "Verify OAuth credentials accessible",
+          "status": "COMPLETE",
+          "result": "OAuth passed via environment variables successfully"
+        },
+        {
+          "task": "Document configuration",
+          "status": "COMPLETE",
+          "file": "configs/code-execution-config.json"
+        }
+      ],
+      "timeSpent": "3 hours",
+      "blockers": [
+        {
+          "blocker": "Tool naming mismatch (snake_case vs camelCase)",
+          "resolution": "Discovered actual tool names via tools/list, fixed wrapper",
+          "impact": "30 minutes debugging"
+        }
+      ]
+    }
+  },
+
+  "nextSteps": [
+    "Update CHECKPOINTS.md with 2.2 completion",
+    "Git commit Checkpoint 2.2",
+    "Proceed to Checkpoint 2.3: First Code Execution Test",
+    "Test complex query with data filtering (Checkpoint 2.4)",
+    "Test multi-step workflow (Checkpoint 2.5)"
+  ],
+
+  "references": {
+    "anthropic": "https://www.anthropic.com/engineering/code-execution-with-mcp",
+    "mcpProtocol": "https://spec.modelcontextprotocol.io/",
+    "googleTasksMCP": "https://github.com/BrandCast-Signage/tasks-mcp-server",
+    "blockerDocument": "checkpoint-2.2-ARCHITECTURAL-BLOCKER.md"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@pai/google-mcp-wrappers",
+  "version": "1.0.0",
+  "description": "TypeScript wrappers for Google MCP servers (Tasks, Calendar, Drive)",
+  "main": "servers/index.ts",
+  "type": "module",
+  "scripts": {
+    "test": "npx tsx examples/test-integration.ts"
+  },
+  "keywords": [
+    "mcp",
+    "google",
+    "tasks",
+    "calendar",
+    "drive",
+    "model-context-protocol"
+  ],
+  "author": "PAI",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
