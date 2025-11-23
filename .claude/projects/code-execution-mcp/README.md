@@ -39,7 +39,8 @@
 ```
 .claude/projects/code-execution-mcp/
 ├── README.md                           # This file - Project overview
-├── INTEGRATION-GUIDE.md                # ⭐ NEW - How to integrate ANY MCP
+├── INTEGRATION-GUIDE.md                # ⭐ How to integrate ANY MCP
+├── PORTABILITY-GUIDE.md                # ⭐ NEW - Portability & Common vs Inline patterns
 ├── USAGE-GUIDE.md                      # How to use Google MCPs
 ├── PLAN.md                             # Original architecture plan
 ├── CHECKPOINTS.md                      # Development history
@@ -201,7 +202,7 @@
 ```typescript
 #!/usr/bin/env npx tsx
 
-import { listTaskLists, listTasks } from '/home/emyth/PAI/.claude/projects/code-execution-mcp/servers/google-tasks';
+import { listTaskLists, listTasks } from '${process.env.HOME}/.claude/projects/code-execution-mcp/servers/google-tasks';
 
 async function main() {
   const lists = await listTaskLists();
@@ -212,6 +213,32 @@ main();
 ```
 
 See [docs/quick-start.md](docs/quick-start.md) for detailed guide.
+
+---
+
+## 📋 Common vs Inline Pattern
+
+**When writing code execution scripts, choose the right approach:**
+
+### Use Common Query Scripts
+- **For:** Frequently-used operations ("today's events", "check DMs", "upcoming tasks")
+- **Location:** `servers/{mcp-name}/{operation}-{scope}.ts`
+- **Example:** `servers/google-calendar/today-events.ts`
+- **Benefits:** Reusable, documented in skills, no code duplication
+
+### Use Inline Code
+- **For:** One-off queries, context-specific logic, simple operations
+- **Example:** Direct import and call in conversation context
+- **Benefits:** Faster for simple queries, no script file creation
+
+### Portability Requirements (CRITICAL)
+- ✅ **No hardcoded user emails, IDs, or names** - use environment variables
+- ✅ **No hardcoded absolute paths** - use `${process.env.HOME}` or relative imports
+- ✅ **No hardcoded credentials** - load from `~/.claude/.env` or credential files
+- ✅ **Cross-platform paths** - use `path.join()`, not string concatenation
+- ✅ **Portable command execution** - use full bun path, not `bunx`
+
+**See [PORTABILITY-GUIDE.md](PORTABILITY-GUIDE.md) for complete guidelines and examples.**
 
 ---
 

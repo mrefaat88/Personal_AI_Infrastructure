@@ -17,7 +17,8 @@ This template demonstrates how to integrate ANY MCP server using code execution 
 2. **Follow the methodology** - `docs/integration/methodology.md`
 3. **Copy templates** - Customize `templates/` for your MCP
 4. **Reference examples** - See `examples/` for working patterns
-5. **Test thoroughly** - Use `examples/` test patterns
+5. **Create portable scripts** - Follow `PORTABILITY-GUIDE.md` for common vs inline pattern
+6. **Test thoroughly** - Use `examples/` test patterns
 
 ## Reference Implementation: Google MCPs
 
@@ -81,6 +82,117 @@ Code execution approach:
     │  - Returns task data                 │
     └──────────────────────────────────────┘
 ```
+
+---
+
+## 📋 Common vs Inline Pattern (CRITICAL)
+
+When creating code execution scripts for MCP operations, follow this pattern:
+
+### Common Query Scripts
+
+**Create when:**
+- Operation will be used frequently ("today's events", "check DMs", "upcoming tasks")
+- Complex formatting/filtering logic required
+- Multiple users/contexts will reuse the query
+
+**Location:** `servers/{mcp-name}/{operation}-{scope}.ts`
+
+**Structure:**
+```typescript
+#!/usr/bin/env npx tsx
+/**
+ * Common Query: {Description}
+ *
+ * Usage:
+ *   npx tsx ~/.claude/projects/code-execution-mcp/servers/{mcp-name}/{script}.ts
+ *
+ * Environment Variables:
+ *   - VAR_NAME: Optional/Required - description
+ */
+
+// ✅ Use relative imports (script lives in server directory)
+import { operation } from './operation';
+
+// ✅ Load user-specific settings from environment
+const userEmail = process.env.USER_EMAIL;
+
+async function main() {
+  // Implementation
+}
+
+main();
+```
+
+**Document in skill:**
+```markdown
+## Common Query Scripts
+
+### {script-name}.ts
+**Usage:** {description}
+```bash
+npx tsx ~/.claude/projects/code-execution-mcp/servers/{mcp-name}/{script}.ts
+```
+
+**Environment Variables:**
+- `VAR_NAME`: Optional/Required - description
+```
+
+### Inline Code
+
+**Use when:**
+- One-off query specific to current context
+- Simple operation (single function call + basic filtering)
+- User-specific request that won't be reused
+
+**Pattern:**
+```typescript
+#!/usr/bin/env npx tsx
+import { operation } from '${process.env.HOME}/.claude/projects/code-execution-mcp/servers/{mcp-name}';
+
+const result = await operation({ ... });
+console.log(result);
+```
+
+### Portability Requirements (MANDATORY)
+
+**For ALL scripts (common and inline):**
+
+✅ **No hardcoded user information:**
+```typescript
+// ❌ BAD
+const userEmail = 'm.refaat@intelmatix.ai';
+
+// ✅ GOOD
+const userEmail = process.env.USER_EMAIL || process.env.GOOGLE_USER_EMAIL;
+```
+
+✅ **No hardcoded paths:**
+```typescript
+// ❌ BAD
+import { op } from '/Users/username/.claude/projects/code-execution-mcp/servers/mcp';
+
+// ✅ GOOD (for inline code in docs/skills)
+import { op } from '${process.env.HOME}/.claude/projects/code-execution-mcp/servers/mcp';
+
+// ✅ GOOD (for common query scripts in server directory)
+import { op } from './operation';
+```
+
+✅ **Portable command execution:**
+```typescript
+// ❌ BAD
+spawn('bunx', ['@package/mcp'], { ... });
+
+// ✅ GOOD
+import * as path from 'path';
+const bunPath = path.join(process.env.HOME || '', '.bun', 'bin', 'bun');
+spawn(bunPath, ['x', '@package/mcp'], { ... });
+```
+
+**See [PORTABILITY-GUIDE.md](PORTABILITY-GUIDE.md) for complete guidelines.**
+
+---
 
 ## Integration Steps
 

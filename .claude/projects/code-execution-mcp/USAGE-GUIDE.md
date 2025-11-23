@@ -45,9 +45,129 @@ main();
 npx tsx your-script.ts
 
 # Method 3: From project root
-cd /home/emyth/PAI/.claude/projects/code-execution-mcp
+cd ~/.claude/projects/code-execution-mcp
 npx tsx your-script.ts
+
+# Method 4: Run common query scripts directly
+npx tsx ~/.claude/projects/code-execution-mcp/servers/google-calendar/today-events.ts
 ```
+
+---
+
+## 📋 Common vs Inline Pattern
+
+### Common Query Scripts (Recommended for Frequent Operations)
+
+**When to use:**
+- Operation used frequently ("today's events", "check DMs", "upcoming tasks")
+- Complex formatting/filtering logic
+- Multiple users will reuse the query
+
+**Location:** `servers/{mcp-name}/{operation}-{scope}.ts`
+
+**Example:** `servers/google-calendar/today-events.ts`
+
+**How to run:**
+```bash
+npx tsx ~/.claude/projects/code-execution-mcp/servers/google-calendar/today-events.ts
+```
+
+**Benefits:**
+- Reusable across sessions
+- Documented in skills (discoverable)
+- No code duplication
+- Consistent behavior
+
+### Inline Code (For One-Off Queries)
+
+**When to use:**
+- Context-specific query
+- Simple operation (single function call)
+- Won't be reused
+
+**Example:**
+```typescript
+#!/usr/bin/env npx tsx
+import { listEvents } from '${process.env.HOME}/.claude/projects/code-execution-mcp/servers/google-calendar';
+
+const result = await listEvents({
+  calendarId: 'primary',
+  timeMin: '2025-12-01T00:00:00',
+  timeMax: '2025-12-07T23:59:59',
+  timeZone: 'Asia/Riyadh'
+});
+
+console.log(JSON.parse(result.content[0].text).events);
+```
+
+**Benefits:**
+- Faster for simple queries
+- No script file creation needed
+- Clear context-specific logic
+
+---
+
+## Portability Requirements (CRITICAL)
+
+### No Hardcoded User Information
+
+❌ **BAD:**
+```typescript
+const userEmail = 'm.refaat@intelmatix.ai';
+const userId = 'U0565H62NUX';
+```
+
+✅ **GOOD:**
+```typescript
+const userEmail = process.env.USER_EMAIL || process.env.GOOGLE_USER_EMAIL;
+const userId = process.env.SLACK_USER_ID;
+
+if (!userId) {
+  console.error('ERROR: SLACK_USER_ID must be set in ~/.claude/.env');
+  process.exit(1);
+}
+```
+
+### No Hardcoded Paths
+
+❌ **BAD:**
+```typescript
+import { op } from '/Users/username/.claude/projects/code-execution-mcp/servers/mcp';
+```
+
+✅ **GOOD (for skills/docs - AI will expand):**
+```typescript
+import { op } from '${process.env.HOME}/.claude/projects/code-execution-mcp/servers/mcp';
+```
+
+✅ **GOOD (for common scripts in server directory):**
+```typescript
+import { op } from './operation';  // Relative import
+```
+
+### Environment Variables Setup
+
+Create `~/.claude/.env` with user-specific values:
+
+```bash
+# User Identity
+USER_EMAIL=your.email@example.com
+GOOGLE_USER_EMAIL=your.email@example.com
+USER_NAME=Your Name
+
+# Service IDs
+SLACK_USER_ID=U0123456789
+SLACK_TEAM_ID=T0123456789
+
+# Credentials (if not using credential files)
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REFRESH_TOKEN=...
+```
+
+**See [PORTABILITY-GUIDE.md](PORTABILITY-GUIDE.md) for complete guidelines.**
+
+---
 
 ## Available Functions
 
